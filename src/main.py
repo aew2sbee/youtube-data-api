@@ -127,7 +127,7 @@ def save_to_file(messages, user_durations, current_date):
     txt_filename = f"./output/txt/{current_date}.txt"
     with open(txt_filename, "w", encoding="utf-8") as file:
         # 今月の勉強時間ランキングの表示
-        file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
+        file.write(f"\n🥇今月の勉強時間ランキング({current_time_str}時点)\n")
 
         # ユーザーごとの滞在時間を長い順にソート
         sorted_user_durations = sorted(previous_month_data.items(), key=lambda x: x[1], reverse=True)
