@@ -3,6 +3,10 @@ from googleapiclient.discovery import build
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
+# 現在の日付を取得（JST 日本時間に変換）
+now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
+current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
+
 # .envファイルの読み込み
 load_dotenv()
 
@@ -35,6 +39,15 @@ def get_live_chat_id(api_key, video_id):
         return None
 
     return live_chat_id
+
+def format_duration(seconds):
+    """ 秒数を X時間Y分 に変換 """
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    if hours > 0:
+        return f"{hours}時間{minutes}分"
+    else:
+        return f"{minutes}分"
 
 def get_live_chat_messages(api_key, live_chat_id):
     """ 指定したライブチャットIDのメッセージを取得し、開始/終了の差分を集計する """
@@ -82,12 +95,7 @@ if __name__ == "__main__":
     if live_chat_id:
         messages, user_durations = get_live_chat_messages(API_KEY, live_chat_id)
 
-        # メッセージ一覧の表示
-        # print("\n🔹 チャットメッセージ:")
-        # for msg in messages:
-        #     print(msg)
-
         # ユーザーごとの滞在時間の集計結果を表示
-        print("\n⏳ ユーザーごとの滞在時間（秒）:")
+        print(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)")
         for user, duration in user_durations.items():
-            print(f"{user}: {duration:.0f} 秒")
+            print(f"{user}: {format_duration(duration)}.\n")
