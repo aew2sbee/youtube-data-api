@@ -3,10 +3,10 @@ from googleapiclient.discovery import build
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
-# 現在の日付を取得（JST 日本時間に変換）
+# 現在の日付と時刻を取得（JST 日本時間に変換）
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
-current_date = now.strftime("%Y-%m-%d")  # 日付（ファイル名用）
+current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
 
 # .envファイルの読み込み
 load_dotenv()
@@ -93,7 +93,7 @@ def get_live_chat_messages(api_key, live_chat_id):
 
 def save_to_file(messages, user_durations, current_date):
     """ 結果をファイルに保存 """
-    filename = f"./output/{current_date}.txt"
+    filename = f"{current_date}.txt"
     with open(filename, "w", encoding="utf-8") as file:
         # 今月の勉強時間ランキングの表示
         file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
