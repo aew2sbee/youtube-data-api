@@ -93,7 +93,7 @@ def get_live_chat_messages(api_key, live_chat_id):
 
 def save_to_file(messages, user_durations, current_date):
     """ 結果をファイルに保存 """
-    filename = f"{current_date}.txt"
+    filename = f"./output/{current_date}.txt"
     with open(filename, "w", encoding="utf-8") as file:
         # 今月の勉強時間ランキングの表示
         file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
