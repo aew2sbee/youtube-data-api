@@ -2,6 +2,7 @@ import os
 from googleapiclient.discovery import build
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+import json
 
 # 現在の日付と時刻を取得（JST 日本時間に変換）
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
@@ -93,8 +94,9 @@ def get_live_chat_messages(api_key, live_chat_id):
 
 def save_to_file(messages, user_durations, current_date):
     """ 結果をファイルに保存 """
-    filename = f"./output/{current_date}.txt"
-    with open(filename, "w", encoding="utf-8") as file:
+    # テキストファイル保存
+    txt_filename = f"./output/txt/{current_date}.txt"
+    with open(txt_filename, "w", encoding="utf-8") as file:
         # 今月の勉強時間ランキングの表示
         file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
 
@@ -104,7 +106,16 @@ def save_to_file(messages, user_durations, current_date):
         for rank, (user, duration) in enumerate(sorted_user_durations, start=1):
             file.write(f"{rank}. {user}: {format_duration(duration)}.\n")
 
-    print(f"結果を {filename} に保存しました！")
+    print(f"結果を {txt_filename} に保存しました！")
+
+    # JSONファイル保存
+    json_filename = f"./output/json/{current_date}.json"
+    json_data = [{"user": user, "study_time": format_duration(duration)} for user, duration in sorted_user_durations]
+
+    with open(json_filename, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+
+    print(f"結果を {json_filename} に保存しました！")
 
 if __name__ == "__main__":
     live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
