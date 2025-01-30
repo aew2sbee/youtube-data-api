@@ -1,8 +1,7 @@
 import os
 from googleapiclient.discovery import build
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
-from pprint import pprint
 
 # .envファイルの読み込み
 load_dotenv()
@@ -50,7 +49,13 @@ def get_live_chat_messages(api_key, live_chat_id):
     for item in response.get("items", []):
         author = item["authorDetails"]["displayName"]
         message = item["snippet"]["displayMessage"]
-        messages.append(f"{author}: {message}")
+        timestamp = item["snippet"]["publishedAt"]
+
+        # タイムスタンプを UTC からローカル時刻に変換
+        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        local_time = dt.astimezone(timezone.utc)  # 必要に応じて JST などに変換
+
+        messages.append(f"[{local_time.strftime('%Y-%m-%d %H:%M:%S')}] {author}: {message}")
 
     return messages
 
