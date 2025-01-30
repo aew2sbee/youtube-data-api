@@ -8,6 +8,7 @@ import json
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
 current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
+current_month = now.strftime("%Y-%m")  # 現在の月（YYYY-MM）
 
 # .envファイルの読み込み
 load_dotenv()
@@ -92,8 +93,36 @@ def get_live_chat_messages(api_key, live_chat_id):
 
     return messages, user_durations
 
+def load_previous_month_data():
+    """ 前月のJSONファイルを読み込み、累計時間を計算 """
+    previous_month_file = f"./output/json/{current_month}.json"
+
+    if os.path.exists(previous_month_file):
+        with open(previous_month_file, "r", encoding="utf-8") as file:
+            previous_month_data = json.load(file)
+            user_durations = {}
+            for entry in previous_month_data:
+                user = entry['user']
+                study_time_seconds = entry['study_time_seconds']
+                if user in user_durations:
+                    user_durations[user] += study_time_seconds
+                else:
+                    user_durations[user] = study_time_seconds
+            return user_durations
+    return {}
+
 def save_to_file(messages, user_durations, current_date):
     """ 結果をファイルに保存 """
+    # 前月の累計データを読み込む
+    previous_month_data = load_previous_month_data()
+
+    # 累計時間を加算
+    for user, duration in user_durations.items():
+        if user in previous_month_data:
+            previous_month_data[user] += duration
+        else:
+            previous_month_data[user] = duration
+
     # テキストファイル保存
     txt_filename = f"./output/txt/{current_date}.txt"
     with open(txt_filename, "w", encoding="utf-8") as file:
@@ -101,7 +130,7 @@ def save_to_file(messages, user_durations, current_date):
         file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
 
         # ユーザーごとの滞在時間を長い順にソート
-        sorted_user_durations = sorted(user_durations.items(), key=lambda x: x[1], reverse=True)
+        sorted_user_durations = sorted(previous_month_data.items(), key=lambda x: x[1], reverse=True)
 
         for rank, (user, duration) in enumerate(sorted_user_durations, start=1):
             file.write(f"{rank}. {user}: {format_duration(duration)}.\n")
