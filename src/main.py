@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 # 現在の日付を取得（JST 日本時間に変換）
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
+current_date = now.strftime("%Y-%m-%d")  # 日付（ファイル名用）
 
 # .envファイルの読み込み
 load_dotenv()
@@ -90,12 +91,25 @@ def get_live_chat_messages(api_key, live_chat_id):
 
     return messages, user_durations
 
+def save_to_file(messages, user_durations, current_date):
+    """ 結果をファイルに保存 """
+    filename = f"./output/{current_date}.txt"
+    with open(filename, "w", encoding="utf-8") as file:
+        # 今月の勉強時間ランキングの表示
+        file.write(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)\n")
+
+        # ユーザーごとの滞在時間を長い順にソート
+        sorted_user_durations = sorted(user_durations.items(), key=lambda x: x[1], reverse=True)
+
+        for rank, (user, duration) in enumerate(sorted_user_durations, start=1):
+            file.write(f"{rank}. {user}: {format_duration(duration)}.\n")
+
+    print(f"結果を {filename} に保存しました！")
+
 if __name__ == "__main__":
     live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
     if live_chat_id:
         messages, user_durations = get_live_chat_messages(API_KEY, live_chat_id)
 
-        # ユーザーごとの滞在時間の集計結果を表示
-        print(f"\n🥇 今月の勉強時間ランキング({current_time_str}時点)")
-        for user, duration in user_durations.items():
-            print(f"{user}: {format_duration(duration)}.\n")
+        # 結果をファイルに保存
+        save_to_file(messages, user_durations, current_date)
