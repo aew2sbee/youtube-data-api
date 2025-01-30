@@ -108,9 +108,9 @@ def save_to_file(messages, user_durations, current_date):
 
     print(f"結果を {txt_filename} に保存しました！")
 
-    # JSONファイル保存
+    # JSONファイル保存 (秒数で保存)
     json_filename = f"./output/json/{current_date}.json"
-    json_data = [{"user": user, "study_time": format_duration(duration)} for user, duration in sorted_user_durations]
+    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in sorted_user_durations]
 
     with open(json_filename, "w", encoding="utf-8") as json_file:
         json.dump(json_data, json_file, ensure_ascii=False, indent=4)
