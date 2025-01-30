@@ -8,12 +8,33 @@ load_dotenv()
 
 # .envから環境変数を取得
 API_KEY = os.getenv('YOUTUBE_API_KEY')  # APIキー
-LIVE_CHAT_ID = os.getenv('LIVE_CHAT_ID')  # ライブチャットID
+VIDEO_ID = os.getenv('VIDEO_ID')  # 動画ID
 
 # YouTube APIのクライアントのセットアップ
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
+
+# 動画IDからライブチャットIDを取得
+def get_live_chat_id(video_id):
+    try:
+        # ライブ配信の詳細情報を取得
+        request = youtube.videos().list(
+            part="liveStreamingDetails",
+            id=video_id
+        )
+        response = request.execute()
+
+        # ライブチャットIDを取得
+        if 'items' in response and len(response['items']) > 0:
+            live_chat_id = response['items'][0]['liveStreamingDetails'].get('activeLiveChatId', None)
+            return live_chat_id
+        else:
+            print("ライブ配信情報が見つかりませんでした。")
+            return None
+    except Exception as e:
+        print(f"Error occurred while fetching live chat ID: {e}")
+        return None
 
 # コメントの取得
 def get_comments(live_chat_id):
@@ -55,7 +76,7 @@ def get_comments(live_chat_id):
                 break
 
         except Exception as e:
-            print(f"Error occurred: {e}")
+            print(f"Error occurred while fetching comments: {e}")
             break
 
     return comments
@@ -82,13 +103,17 @@ def calculate_time_differences(comments):
     return time_differences
 
 # 実行
-comments = get_comments(LIVE_CHAT_ID)
-time_differences = calculate_time_differences(comments)
+live_chat_id = get_live_chat_id(VIDEO_ID)
+if live_chat_id:
+    comments = get_comments(live_chat_id)
+    time_differences = calculate_time_differences(comments)
 
-# 結果の表示
-if time_differences:
-    print(f"コメントの開始と終了のタイムスタンプ差分（秒）:")
-    for diff in time_differences:
-        print(f"{diff}秒")
+    # 結果の表示
+    if time_differences:
+        print(f"コメントの開始と終了のタイムスタンプ差分（秒）:")
+        for diff in time_differences:
+            print(f"{diff}秒")
+    else:
+        print("開始と終了のペアが見つかりませんでした。")
 else:
-    print("開始と終了のペアが見つかりませんでした。")
+    print("ライブチャットIDの取得に失敗しました。")
