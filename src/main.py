@@ -119,7 +119,7 @@ def save_to_file(user_durations):
 
     # JSONファイル保存 (秒数で保存)
     json_filename = f"./output/json/{current_date}.json"
-    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in user_durations]
+    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in user_durations.items()]
 
     with open(json_filename, "w", encoding="utf-8") as json_file:
         json.dump(json_data, json_file, ensure_ascii=False, indent=4)
