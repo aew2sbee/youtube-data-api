@@ -2,13 +2,13 @@ import os
 from googleapiclient.discovery import build
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+from pprint import pprint
 import json
 
 # 現在の日付と時刻を取得（JST 日本時間に変換）
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
 current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
-current_month = now.strftime("%Y-%m")  # 現在の月（YYYY-MM）
 
 # .envファイルの読み込み
 load_dotenv()
@@ -43,14 +43,11 @@ def get_live_chat_id(api_key, video_id):
 
     return live_chat_id
 
-def format_duration(seconds):
-    """ 秒数を X時間Y分 に変換 (小数点なし) """
-    hours = int(seconds // 3600)  # 時間
-    minutes = int((seconds % 3600) // 60)  # 分
-    if hours > 0:
-        return f"{hours}時間{minutes}分"
-    else:
-        return f"{minutes}分"
+def convert_utc_to_jst(timestamp):
+    # タイムスタンプを UTC からローカル時刻に変換
+    dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    local_time = dt.astimezone(timezone(timedelta(hours=9)))  # JST に変換
+    return local_time
 
 def get_live_chat_messages(api_key, live_chat_id):
     """ 指定したライブチャットIDのメッセージを取得し、開始/終了の差分を集計する """
@@ -61,29 +58,22 @@ def get_live_chat_messages(api_key, live_chat_id):
         part="snippet,authorDetails"
     ).execute()
 
-    messages = []
     user_timestamps = {}  # ユーザーごとの「開始」時刻を記録
     user_durations = {}  # ユーザーごとの滞在時間を集計
 
     for item in response.get("items", []):
         author = item["authorDetails"]["displayName"]
         message = item["snippet"]["displayMessage"]
-        timestamp = item["snippet"]["publishedAt"]
-
-        # タイムスタンプを UTC からローカル時刻に変換
-        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-        local_time = dt.astimezone(timezone.utc)  # 必要に応じて JST などに変換
-
-        messages.append(f"[{local_time.strftime('%Y-%m-%d %H:%M:%S')}] {author}: {message}")
+        timestamp = convert_utc_to_jst(item["snippet"]["publishedAt"])
 
         # 「開始」メッセージを記録
         if "開始" in message:
-            user_timestamps[author] = local_time
-
+            user_timestamps[author] = timestamp
+            pprint(user_timestamps)
         # 「終了」メッセージを検出して差分を計算
         if "終了" in message and author in user_timestamps:
             start_time = user_timestamps.pop(author)  # 「開始」時刻を取得して削除
-            duration = (local_time - start_time).total_seconds()  # 差分を秒単位で計算
+            duration = (timestamp - start_time).total_seconds()  # 差分を秒単位で計算
 
             # ユーザーごとの合計時間を集計
             if author in user_durations:
@@ -91,10 +81,11 @@ def get_live_chat_messages(api_key, live_chat_id):
             else:
                 user_durations[author] = duration
 
-    return messages, user_durations
+    return user_durations
 
 def load_previous_month_data():
     """ output/jsonディレクトリ内の全てのJSONファイルを読み込み、累計時間を計算 """
+    current_month = now.strftime("%Y-%m")  # 現在の月（YYYY-MM）
     previous_month_data = {}
 
     # output/jsonディレクトリ内の全てのJSONファイルを読み込む
@@ -102,19 +93,29 @@ def load_previous_month_data():
 
     for json_file in json_files:
         file_path = f"./output/json/{json_file}"
-        with open(file_path, "r", encoding="utf-8") as file:
-            data = json.load(file)
-            for entry in data:
-                user = entry['user']
-                study_time_seconds = entry['study_time_seconds']
-                if user in previous_month_data:
-                    previous_month_data[user] += study_time_seconds
-                else:
-                    previous_month_data[user] = study_time_seconds
+        if current_month in json_file:
+            with open(file_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+                for entry in data:
+                    user = entry['user']
+                    study_time_seconds = entry['study_time_seconds']
+                    if user in previous_month_data:
+                        previous_month_data[user] += study_time_seconds
+                    else:
+                        previous_month_data[user] = study_time_seconds
 
     return previous_month_data
 
-def save_to_file(messages, user_durations, current_date):
+def format_duration(seconds):
+    """ 秒数を X時間Y分 に変換 (小数点なし) """
+    hours = int(seconds // 3600)  # 時間
+    minutes = int((seconds % 3600) // 60)  # 分
+    if hours > 0:
+        return f"{hours}時間{minutes}分"
+    else:
+        return f"{minutes}分"
+
+def save_to_file(user_durations, current_date):
     """ 結果をファイルに保存 """
     # 前月の累計データを読み込む
     previous_month_data = load_previous_month_data()
@@ -158,7 +159,11 @@ def save_to_file(messages, user_durations, current_date):
 if __name__ == "__main__":
     live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
     if live_chat_id:
-        messages, user_durations = get_live_chat_messages(API_KEY, live_chat_id)
+        user_durations = get_live_chat_messages(API_KEY, live_chat_id)
 
         # 結果をファイルに保存
-        save_to_file(messages, user_durations, current_date)
+        if user_durations:
+            save_to_file(user_durations, current_date)
+        else:
+            print("結果が空です")
+    save_to_file(user_durations, current_date)
