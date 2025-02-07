@@ -7,36 +7,36 @@
 3. Cさん: 7時間25分(+40分)
 ```
 
-## 1. 環境構築
-### 1. インストール
+## 0. 環境構築
+0. 環境変数
 ```bash
 touch .env
 ```
+1. `YOUTUBE_API_KEY`と`VIDEO_ID`の記載
 ```plaintext
 YOUTUBE_API_KEY=XXXXXXXXXXXXXXXXX
 VIDEO_ID=XXXXXXXXXXXX
 ```
-### 2. インストール
+2. インストール
 ```bash
 pip install -r requirements.txt
 ```
-## 2. スクリプト実行
+
+## 1. スクリプト実行
 ```bash
 python src/main.py
 ```
 
 ## 2. Docker
-### 1. コンテナを起動
+1. コンテナを起動
 ```bash
 docker-compose up
 ```
-
-### 2. コンテナを再起動
+2. コンテナを再起動
 ```bash
 docker-compose restart
 ```
-
-### 3. コンテナを停止
+3. コンテナを停止
 ```bash
 docker-compose down
 ```
