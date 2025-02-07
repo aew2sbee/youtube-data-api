@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  python-app:
+    build: .
+    container_name: python-app
+    tty: true
+    volumes:
+      - .:/app  # ホストのカレントディレクトリをコンテナの /app にマウント
