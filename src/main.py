@@ -165,4 +165,4 @@ if __name__ == "__main__":
         if user_durations:
             save_to_file(user_durations)
         else:
-            print("結果が空です")
+            print("記録がありませんでした")
