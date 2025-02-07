@@ -8,7 +8,6 @@ import json
 # 現在の日付と時刻を取得（JST 日本時間に変換）
 now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 current_time_str = now.strftime("%Y/%m/%d")  # YYYY/MM/DD フォーマット
-current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
 
 # .envファイルの読み込み
 load_dotenv()
@@ -69,7 +68,6 @@ def get_live_chat_messages(api_key, live_chat_id):
         # 「開始」メッセージを記録
         if "開始" in message:
             user_timestamps[author] = timestamp
-            pprint(user_timestamps)
         # 「終了」メッセージを検出して差分を計算
         if "終了" in message and author in user_timestamps:
             start_time = user_timestamps.pop(author)  # 「開始」時刻を取得して削除
@@ -115,8 +113,19 @@ def format_duration(seconds):
     else:
         return f"{minutes}分"
 
-def save_to_file(user_durations, current_date):
+def save_to_file(user_durations):
     """ 結果をファイルに保存 """
+    current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
+
+    # JSONファイル保存 (秒数で保存)
+    json_filename = f"./output/json/{current_date}.json"
+    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in user_durations]
+
+    with open(json_filename, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+
+    print(f"save: {json_filename}")
+
     # 前月の累計データを読み込む
     previous_month_data = load_previous_month_data()
 
@@ -145,16 +154,7 @@ def save_to_file(user_durations, current_date):
             # 出力形式に合わせて表示
             file.write(f"{rank}. {user}: {formatted_duration}(+{today_formatted})\n")
 
-    print(f"結果を{txt_filename} に保存しました！")
-
-    # JSONファイル保存 (秒数で保存)
-    json_filename = f"./output/json/{current_date}.json"
-    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in sorted_user_durations]
-
-    with open(json_filename, "w", encoding="utf-8") as json_file:
-        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
-
-    print(f"結果を{json_filename} に保存しました！")
+    print(f"save: {txt_filename}")
 
 if __name__ == "__main__":
     live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
@@ -163,7 +163,6 @@ if __name__ == "__main__":
 
         # 結果をファイルに保存
         if user_durations:
-            save_to_file(user_durations, current_date)
+            save_to_file(user_durations)
         else:
             print("結果が空です")
-    save_to_file(user_durations, current_date)
