@@ -62,6 +62,9 @@ def get_live_chat_messages(api_key, live_chat_id):
 
     for item in response.get("items", []):
         author = item["authorDetails"]["displayName"]
+        if author == "小倉あん":
+            continue
+
         message = item["snippet"]["displayMessage"]
         timestamp = convert_utc_to_jst(item["snippet"]["publishedAt"])
 
@@ -117,15 +120,6 @@ def save_to_file(user_durations):
     """ 結果をファイルに保存 """
     current_date = now.strftime("%Y-%m-%d_%H-%M")  # 日付と時間（HH-MM）を追加
 
-    # JSONファイル保存 (秒数で保存)
-    json_filename = f"./output/json/{current_date}.json"
-    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in user_durations.items()]
-
-    with open(json_filename, "w", encoding="utf-8") as json_file:
-        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
-
-    print(f"save: {json_filename}")
-
     # 前月の累計データを読み込む
     previous_month_data = load_previous_month_data()
 
@@ -155,6 +149,15 @@ def save_to_file(user_durations):
             file.write(f"{rank}. {user}: {formatted_duration}(+{today_formatted})\n")
 
     print(f"save: {txt_filename}")
+
+    # JSONファイル保存 (秒数で保存)
+    json_filename = f"./output/json/{current_date}.json"
+    json_data = [{"user": user, "study_time_seconds": duration} for user, duration in user_durations.items()]
+
+    with open(json_filename, "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+
+    print(f"save: {json_filename}")
 
 if __name__ == "__main__":
     live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
