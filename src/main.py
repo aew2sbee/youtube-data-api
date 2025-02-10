@@ -21,9 +21,8 @@ YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
 
-def get_live_chat_id(api_key, video_id):
+def get_live_chat_id(youtube, video_id):
     """ 指定したビデオIDのライブチャットIDを取得する """
-    youtube = build("youtube", "v3", developerKey=api_key)
 
     response = youtube.videos().list(
         part="liveStreamingDetails",
@@ -48,13 +47,13 @@ def convert_utc_to_jst(timestamp):
     local_time = dt.astimezone(timezone(timedelta(hours=9)))  # JST に変換
     return local_time
 
-def get_live_chat_messages(api_key, live_chat_id):
+def get_live_chat_messages(youtube, live_chat_id):
     """ 指定したライブチャットIDのメッセージを取得し、開始/終了の差分を集計する """
-    youtube = build("youtube", "v3", developerKey=api_key)
 
     response = youtube.liveChatMessages().list(
         liveChatId=live_chat_id,
-        part="snippet,authorDetails"
+        part="snippet,authorDetails",
+        maxResults=2000  # 最大取得数
     ).execute()
 
     user_timestamps = {}  # ユーザーごとの「開始」時刻を記録
@@ -160,9 +159,9 @@ def save_to_file(user_durations):
     print(f"save: {json_filename}")
 
 if __name__ == "__main__":
-    live_chat_id = get_live_chat_id(API_KEY, VIDEO_ID)
+    live_chat_id = get_live_chat_id(youtube, VIDEO_ID)
     if live_chat_id:
-        user_durations = get_live_chat_messages(API_KEY, live_chat_id)
+        user_durations = get_live_chat_messages(youtube, live_chat_id)
 
         # 結果をファイルに保存
         if user_durations:
