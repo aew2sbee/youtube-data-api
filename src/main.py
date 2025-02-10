@@ -59,6 +59,10 @@ def get_live_chat_messages(youtube, live_chat_id):
     user_timestamps = {}  # ユーザーごとの「開始」時刻を記録
     user_durations = {}  # ユーザーごとの滞在時間を集計
 
+    print('nextPageToken', response['nextPageToken'])
+    print('pollingIntervalMillis', response['pollingIntervalMillis'])
+    print('totalResults', response['pageInfo']['totalResults'])
+    print('resultsPerPage', response['pageInfo']['resultsPerPage'])
     for item in response.get("items", []):
         author = item["authorDetails"]["displayName"]
         if author == "小倉あん":
@@ -67,6 +71,7 @@ def get_live_chat_messages(youtube, live_chat_id):
         message = item["snippet"]["displayMessage"]
         timestamp = convert_utc_to_jst(item["snippet"]["publishedAt"])
 
+        print(f"{timestamp} {author}: {message}")
         # 「開始」メッセージを記録
         if "開始" in message:
             user_timestamps[author] = timestamp
