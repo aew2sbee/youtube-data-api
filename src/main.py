@@ -59,10 +59,10 @@ def get_live_chat_messages(youtube, live_chat_id):
     user_timestamps = {}  # ユーザーごとの「開始」時刻を記録
     user_durations = {}  # ユーザーごとの滞在時間を集計
 
-    print('nextPageToken', response['nextPageToken'])
-    print('pollingIntervalMillis', response['pollingIntervalMillis'])
-    print('totalResults', response['pageInfo']['totalResults'])
-    print('resultsPerPage', response['pageInfo']['resultsPerPage'])
+    print('nextPageToken: ', response['nextPageToken'])
+    print('pollingIntervalMillis: ', response['pollingIntervalMillis'])
+    print('totalResults: ', response['pageInfo']['totalResults'])
+    print('resultsPerPage: ', response['pageInfo']['resultsPerPage'])
     for item in response.get("items", []):
         author = item["authorDetails"]["displayName"]
         if author == "小倉あん":
@@ -172,4 +172,4 @@ if __name__ == "__main__":
         if user_durations:
             save_to_file(user_durations)
         else:
-            print("記録がありませんでした")
+            print("[INFO] 記録がありませんでした")
